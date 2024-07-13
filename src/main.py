@@ -2,8 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import drop_tables, create_tables
+from auth.router import router as auth_router
 
 app = FastAPI()
+app.include_router(auth_router)
 
 allow_headers = [
     "Content-Type",
