@@ -24,4 +24,5 @@ class SUser(BaseModel):
 
 
 class SUserInDB(SUser):
+    id: int
     hashed_password: str

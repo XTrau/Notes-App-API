@@ -1,12 +1,12 @@
 from datetime import datetime, timezone, timedelta
 import jwt
-from fastapi import Depends, HTTPException, Request, Response
+from fastapi import Depends, HTTPException, Request
 from jwt import InvalidTokenError
 from passlib.context import CryptContext
 from starlette import status
 
 from auth.repository import UserRepository
-from auth.schemas import TokenData, SUser, SUserCreate
+from auth.schemas import TokenData, SUser, SUserCreate, SUserInDB
 from config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"])
@@ -55,14 +55,13 @@ async def get_current_user(token: str = Depends(get_token_from_cookies)):
     try:
         payload = jwt.decode(token, key=settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         payload_dict = payload.get("sub")
-        print(payload_dict)
         if payload_dict is None:
             raise credentials_exception
         token_data = TokenData(username=payload_dict.get("username"))
     except InvalidTokenError:
         raise credentials_exception
     user_model = await UserRepository.get_user_by_username(username=token_data.username)
-    return SUser.model_validate(user_model, from_attributes=True)
+    return SUserInDB.model_validate(user_model, from_attributes=True)
 
 
 async def get_current_active_user(user: SUser = Depends(get_current_user)):
