@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+import uvicorn
+
 from database import drop_tables, create_tables
 from auth.router import router as auth_router
 from notes.router import router as notes_router
@@ -49,3 +51,6 @@ async def reset_database():
     await drop_tables()
     await create_tables()
     return {"message": "Database reseted!"}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

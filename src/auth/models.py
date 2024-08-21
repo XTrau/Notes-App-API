@@ -8,7 +8,7 @@ class UserOrm(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     username: Mapped[str] = mapped_column(unique=True)
-    email: Mapped[str | None] = mapped_column(unique=True)
+    email: Mapped[str] = mapped_column(unique=True)
     hashed_password: Mapped[str]
 
     is_verified: Mapped[bool] = mapped_column(default=False)

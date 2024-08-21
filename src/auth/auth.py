@@ -38,8 +38,8 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 
-async def authenticate_user(username: str, password: str):
-    user_model = await UserRepository.get_user_by_username(username=username)
+async def authenticate_user(email: str, password: str):
+    user_model = await UserRepository.get_user_by_email(email=email)
     if user_model is None:
         return False
     if not verify_password(password, user_model.hashed_password):
@@ -57,10 +57,10 @@ async def get_current_user(token: str = Depends(get_token_from_cookies)):
         payload_dict = payload.get("sub")
         if payload_dict is None:
             raise credentials_exception
-        token_data = TokenData(username=payload_dict.get("username"))
+        token_data = TokenData(email=payload_dict.get("email"))
     except InvalidTokenError:
         raise credentials_exception
-    user_model = await UserRepository.get_user_by_username(username=token_data.username)
+    user_model = await UserRepository.get_user_by_email(email=token_data.email)
     return SUserInDB.model_validate(user_model, from_attributes=True)
 
 
@@ -77,7 +77,8 @@ async def register_user(user: SUserCreate):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User already exists",
         )
-    user.hashed_password = get_password_hash(user.password)
-    await UserRepository.create_user(user)
+
+    hashed_password: str = get_password_hash(user.password)
+    await UserRepository.create_user(user, hashed_password)
     user_model = await UserRepository.get_user_by_username(user.username)
     return SUser.model_validate(user_model, from_attributes=True)

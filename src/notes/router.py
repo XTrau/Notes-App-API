@@ -17,7 +17,7 @@ async def get_notes(user: SUserInDB = Depends(get_current_active_user)):
 
 
 @router.post("/", response_model=SNote)
-async def create_note(note_data: SNoteCreate = Depends(), user: SUserInDB = Depends(get_current_active_user)):
+async def create_note(note_data: SNoteCreate, user: SUserInDB = Depends(get_current_active_user)):
     note_data.user_id = user.id
     await NoteRepository.create_note(note_data)
     return note_data

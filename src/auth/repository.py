@@ -15,7 +15,7 @@ class UserRepository:
             return user
 
     @staticmethod
-    async def get_user_by_email(email):
+    async def get_user_by_email(email: str):
         async with new_session() as session:
             query = select(UserOrm).where(UserOrm.email == email)
             result = await session.execute(query)
@@ -23,8 +23,8 @@ class UserRepository:
             return user
 
     @staticmethod
-    async def create_user(user: SUserCreate):
+    async def create_user(user: SUserCreate, hashed_password: str):
         async with new_session() as session:
-            user = UserOrm(username=user.username, hashed_password=user.hashed_password)
+            user = UserOrm(username=user.username, email=user.email, hashed_password=hashed_password)
             session.add(user)
             await session.commit()

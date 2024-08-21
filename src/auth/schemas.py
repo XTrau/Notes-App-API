@@ -7,22 +7,25 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    username: str | None = None
+    email: str | None = None
 
 
-class SUserCreate(BaseModel):
-    username: str
+class SUserLogin(BaseModel):
+    email: EmailStr
     password: str
-    hashed_password: str | None = None
+
+
+class SUserCreate(SUserLogin):
+    username: str
 
 
 class SUser(BaseModel):
+    id: int
     username: str
-    email: EmailStr | None = None
+    email: EmailStr
     disabled: bool | None = None
     is_verified: bool | None = None
 
 
 class SUserInDB(SUser):
-    id: int
     hashed_password: str
