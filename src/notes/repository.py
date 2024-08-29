@@ -1,4 +1,4 @@
-from sqlalchemy import select, insert
+from sqlalchemy import select
 
 from database import new_session
 from notes.schemas import SNoteCreate
