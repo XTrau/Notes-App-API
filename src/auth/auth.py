@@ -1,76 +1,73 @@
-from datetime import datetime, timezone, timedelta
-import jwt
 from fastapi import Depends, HTTPException, Request
 from jwt import InvalidTokenError
 from passlib.context import CryptContext
 from starlette import status
 
+from auth.jwt import decode_jwt
 from auth.repository import UserRepository
-from auth.schemas import TokenData, SUser, SUserCreate, SUserInDB
+from auth.schemas import TokenData, SUser, SUserCreate, TokenPair, SUserLogin
 from config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"])
 
 
-async def get_token_from_cookies(request: Request):
-    token = request.cookies.get(settings.TOKEN_NAME, None)
-    if not token:
+def verify_password(plain_password: str, hashed_password: str):
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def get_password_hash(password: str):
+    return pwd_context.hash(password)
+
+
+async def get_tokens_from_cookies(request: Request) -> TokenPair:
+    access_token = request.cookies.get(settings.jwt.ACCESS_TOKEN_NAME, None)
+    refresh_token = request.cookies.get(settings.jwt.REFRESH_TOKEN_NAME, None)
+    if not access_token or not refresh_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
         )
-    return token
+    return TokenPair(access_token=access_token, refresh_token=refresh_token)
 
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+async def authenticate_user(data: SUserLogin) -> SUser:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Неправильный логин или пароль",
+    )
 
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-
-def create_access_token(data: dict):
-    to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.TOKEN_EXPIRE_TIME)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, key=settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-    return encoded_jwt
-
-
-async def authenticate_user(email: str, password: str):
-    user_model = await UserRepository.get_user_by_email(email=email)
+    user_model = await UserRepository.get_user_by_email(email=data.email)
     if user_model is None:
-        return False
-    if not verify_password(password, user_model.hashed_password):
-        return False
+        raise credentials_exception
+    if not verify_password(data.password, user_model.hashed_password):
+        raise credentials_exception
     return SUser.model_validate(user_model, from_attributes=True)
 
 
-async def get_current_user(token: str = Depends(get_token_from_cookies)):
+async def get_current_user(token_pair: TokenPair = Depends(get_tokens_from_cookies)) -> SUser:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
     )
     try:
-        payload = jwt.decode(token, key=settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        payload_dict = payload.get("sub")
+        payload_dict = decode_jwt(token_pair.access_token)
         if payload_dict is None:
             raise credentials_exception
         token_data = TokenData(email=payload_dict.get("email"))
     except InvalidTokenError:
         raise credentials_exception
+
     user_model = await UserRepository.get_user_by_email(email=token_data.email)
-    return SUserInDB.model_validate(user_model, from_attributes=True)
+    return SUser.model_validate(user_model, from_attributes=True)
 
 
-async def get_current_active_user(user: SUser = Depends(get_current_user)):
+async def get_current_active_user(user: SUser = Depends(get_current_user)) -> SUser:
     if user.disabled is True:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
     return user
 
 
-async def register_user(user: SUserCreate):
+async def register_user(user: SUserCreate) -> SUser:
     user_model = await UserRepository.get_user_by_username(user.username)
     if user_model is not None:
         raise HTTPException(
