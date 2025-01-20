@@ -10,22 +10,25 @@ class TokenData(BaseModel):
     email: str | None = None
 
 
-class SUserLogin(BaseModel):
+class SUserBase(BaseModel):
     email: EmailStr
+    username: str
+
+
+class SUserCreate(SUserBase):
     password: str
 
 
-class SUserCreate(SUserLogin):
-    username: str
-
-
-class SUser(BaseModel):
-    id: int
-    username: str
-    email: EmailStr
+class SUser(SUserBase):
     disabled: bool | None = None
     is_verified: bool | None = None
 
 
 class SUserInDB(SUser):
+    id: int
     hashed_password: str
+
+
+class SUserLogin(BaseModel):
+    login: str
+    password: str

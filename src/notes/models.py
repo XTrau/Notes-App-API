@@ -15,5 +15,6 @@ class NoteOrm(Base):
 
     user_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now(), nullable=False)
+    deleted: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     user: Mapped["UserOrm"] = relationship(back_populates="notes")

@@ -1,6 +1,8 @@
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.sql.annotation import Annotated
+
 from config import settings
 
 engine = create_async_engine(url=settings.db.database_url_asyncpg)
@@ -22,3 +24,6 @@ async def drop_tables():
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with new_session() as session:
         yield session
+
+
+SessionDep = Annotated[AsyncSession, get_async_session()]

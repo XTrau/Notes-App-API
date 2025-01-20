@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-
 from auth.schemas import SUser
 
 
@@ -9,11 +8,17 @@ class SNoteBase(BaseModel):
 
 
 class SNoteCreate(SNoteBase):
-    user_id: int
+    pass
 
 
-class SNote(SNoteBase):
+class SNoteInDB(SNoteBase):
     id: int
 
-class SNoteRel(SNote):
+
+class SNoteUser(SNoteInDB):
     user: SUser
+
+
+class SNotePatch(BaseModel):
+    title: str | None = None
+    content: str | None = None

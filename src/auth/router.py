@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Response
 from starlette import status
 
 from auth.jwt import create_access_token, create_refresh_token
-from auth.schemas import SUserCreate, SUser, SUserLogin
+from auth.schemas import SUserCreate, SUserInDB, SUser
 from auth.auth import authenticate_user, get_current_active_user, register_user
 from config import settings
 
@@ -19,7 +19,7 @@ async def register(user: SUserCreate):
 
 
 @router.post('/login')
-async def login_user(response: Response, user: SUser = Depends(authenticate_user)):
+async def login_user(response: Response, user: SUserInDB = Depends(authenticate_user)):
     refresh_token = create_access_token({"email": user.email})
     access_token = create_refresh_token({"email": user.email})
     response.set_cookie(
