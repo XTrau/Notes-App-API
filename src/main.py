@@ -30,7 +30,9 @@ allow_headers = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "http://localhost:5000",
+        "http://localhost:3000"
     ],
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
     allow_headers=allow_headers
@@ -51,6 +53,7 @@ async def reset_database():
     await drop_tables()
     await create_tables()
     return {"message": "Database reseted!"}
+
 
 if __name__ == "__main__":
     uvicorn.run(app)
